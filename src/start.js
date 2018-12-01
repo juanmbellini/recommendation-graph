@@ -1,22 +1,21 @@
-import {MongoClient, ObjectId} from 'mongodb'
-import express from 'express'
-import bodyParser from 'body-parser'
-import {graphqlExpress, graphiqlExpress} from 'graphql-server-express'
-import {makeExecutableSchema} from 'graphql-tools'
-import cors from 'cors'
-import {prepare} from "../util/index"
+import {MongoClient, ObjectId} from 'mongodb';
+import express from 'express';
+import bodyParser from 'body-parser';
+import {graphqlExpress, graphiqlExpress} from 'graphql-server-express';
+import {makeExecutableSchema} from 'graphql-tools';
+import cors from 'cors';
+import {prepare} from "../util/index";
+import dotenv from 'dotenv';
+dotenv.load();
 
+const app = express();
 
-const app = express()
+app.use(cors());
 
-app.use(cors())
-
-const homePath = '/graphiql'
-const URL = 'http://localhost'
-const PORT = 3001
-const MONGO_URL = 'mongodb://localhost:27017/nosql'
-
-
+const homePath = '/graphiql';
+const URL = 'http://localhost';
+const PORT = 3001;
+const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 
 export const start = async () => {
   try {
@@ -29,12 +28,12 @@ export const start = async () => {
     const resolvers = {
       Query: {
         title: async (root, { imdbID }) => {
-          return prepare(await Title.findOne({ tconst: imdbID }));
+          return prepare(await Title.findOne({ imdbID }));
         }
       },
       Title: {
         __resolveType: (book, context, info) => {
-          if ()
+          return 'Movie';
         }
       }
       //   post: async (root, {_id}) => {
