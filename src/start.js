@@ -24,6 +24,7 @@ export const start = async () => {
     const Title = db.collection('titles');
     const Rating = db.collection('ratings');
     const Episode = db.collection('episodes');
+    const Crew = db.collection('crew');
 
     const typeDefs = [require('fs').readFileSync(require('path').join(__dirname, 'typeDefs.graphql')).toString()];
 
@@ -36,6 +37,62 @@ export const start = async () => {
         const rating = await Rating.findOne({ imdbID });
         return rating.numVotes;
       },
+      directors: ({ imdbID }) => {
+        return new Promise((resolve, reject) => {
+          Crew.aggregate([{
+            $match: {
+              imdbID
+            }
+          }, {
+            $unwind: '$directors'
+          }, {
+            $lookup: {
+              from: 'names',
+              localField: 'directors',
+              foreignField: 'imdbID',
+              as: 'director'
+            }
+          }, {
+            $project: {
+              _id: 0,
+              director: {
+                $arrayElemAt: ['$director', 0]
+              }
+            }
+          }], (err, docs) => {
+            if (err) return reject(err);
+            return resolve(docs.map(d => d.director));
+          });
+        });
+      },
+      writers: ({ imdbID }) => {
+        return new Promise((resolve, reject) => {
+          Crew.aggregate([{
+            $match: {
+              imdbID
+            }
+          }, {
+            $unwind: '$writers'
+          }, {
+            $lookup: {
+              from: 'names',
+              localField: 'writers',
+              foreignField: 'imdbID',
+              as: 'writer'
+            }
+          }, {
+            $project: {
+              _id: 0,
+              writer: {
+                $arrayElemAt: ['$writer', 0]
+              }
+            }
+          }], (err, docs) => {
+            if (err) return reject(err);
+            return resolve(docs.map(d => d.writer));
+          });
+        });
+      }
     };
 
     const resolvers = {
