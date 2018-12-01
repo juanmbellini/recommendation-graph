@@ -25,6 +25,7 @@ export const start = async () => {
     const Rating = db.collection('ratings');
     const Episode = db.collection('episodes');
     const Crew = db.collection('crew');
+    const Principal = db.collection('principals');
 
     const typeDefs = [require('fs').readFileSync(require('path').join(__dirname, 'typeDefs.graphql')).toString()];
 
@@ -92,14 +93,40 @@ export const start = async () => {
             return resolve(docs.map(d => d.writer));
           });
         });
+      },
+      actors: ({ imdbID }) => {
+        return new Promise((resolve, reject) => {
+          Principal.aggregate([{
+            $match: {
+              imdbID
+            }
+          }, {
+            $lookup: {
+              from: 'names',
+              localField: 'name',
+              foreignField: 'imdbID',
+              as: 'actor'
+            }
+          }, {
+            $project: {
+              _id: 0,
+              actor: {
+                $arrayElemAt: ['$actor', 0]
+              }
+            }
+          }], (err, docs) => {
+            if (err) return reject(err);
+            return resolve(docs.map(d => d.actor));
+          });
+        });
       }
     };
 
     const resolvers = {
       Query: {
-        title: async (root, { imdbID }) => prepare(await Title.findOne({ imdbID })),
+        title: async (root, { imdbID }) => await Title.findOne({ imdbID }),
         movie: async (root, { imdbID }) => {
-          return prepare(await Title.findOne({
+          return (await Title.findOne({
             imdbID,
             titleType: {
               $in: ['movie', 'tvMovie']
@@ -107,7 +134,7 @@ export const start = async () => {
           }))
         },
         short: async (root, { imdbID }) => {
-          return prepare(await Title.findOne({
+          return (await Title.findOne({
             imdbID,
             titleType: {
               $in: ['short', 'tvShort']
@@ -115,13 +142,13 @@ export const start = async () => {
           }))
         },
         episode: async (root, { imdbID }) => {
-          return prepare(await Title.findOne({
+          return (await Title.findOne({
             imdbID,
             titleType: 'tvEpisode',
           }))
         },
         series: async (root, { imdbID }) => {
-          return prepare(await Title.findOne({
+          return (await Title.findOne({
             imdbID,
             titleType: {
               $in: ['tvSeries', 'tvMiniSeries']
@@ -212,6 +239,12 @@ export const start = async () => {
           const episode = await Episode.findOne({ imdbID });
           const series = await Title.findOne({ imdbID: episode.parentTconst });
           return series;
+        },
+      },
+      Person: {
+        knownForTitles: async ({ knownForTitles }, context, info) => {
+          console.log(knownForTitles)
+          return (await Title.find({ imdbID: { $in: knownForTitles }}).toArray());
         },
       }
     }

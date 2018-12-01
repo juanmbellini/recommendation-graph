@@ -25,6 +25,7 @@ interface Title {
   numVotes: Int
   directors: [Person]
   writers: [Person]
+  actors: [Person]
 }
 
 type Movie implements Title {
@@ -41,6 +42,7 @@ type Movie implements Title {
   numVotes: Int
   directors: [Person]
   writers: [Person]
+  actors: [Person]
 }
 
 type Short implements Title {
@@ -57,6 +59,7 @@ type Short implements Title {
   numVotes: Int
   directors: [Person]
   writers: [Person]
+  actors: [Person]
 }
 
 type Series implements Title {
@@ -73,6 +76,7 @@ type Series implements Title {
   numVotes: Int
   directors: [Person]
   writers: [Person]
+  actors: [Person]
   totalSeasons: Int
   episodes(season: [Int]): [Episode]
 }
@@ -91,6 +95,7 @@ type Episode implements Title {
   numVotes: Int
   directors: [Person]
   writers: [Person]
+  actors: [Person]
   seasonNumber: Int
   episodeNumber: Int
   series: Series
