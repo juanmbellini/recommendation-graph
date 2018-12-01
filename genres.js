@@ -2,9 +2,11 @@ const async = require('async');
 const {MongoClient, ObjectId} = require('mongodb');
 const BSON = require('bson');
 
+require('dotenv').load();
+
 let lastId;
 
-const MONGO_URL = 'mongodb://localhost:27017/nosql';
+const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 
 (async () => {
 	const db = await MongoClient.connect(MONGO_URL);
