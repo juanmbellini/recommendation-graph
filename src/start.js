@@ -21,7 +21,8 @@ export const start = async () => {
   try {
     const db = await MongoClient.connect(MONGO_URL)
 
-    const Title = db.collection('titles')
+    const Title = db.collection('titles');
+    const Rating = db.collection('ratings');
 
     const typeDefs = [require('fs').readFileSync(require('path').join(__dirname, 'typeDefs.graphql')).toString()];
 
@@ -32,9 +33,19 @@ export const start = async () => {
         }
       },
       Title: {
-        __resolveType: (book, context, info) => {
+        __resolveType: (title, context, info) => {
           return 'Movie';
         }
+      },
+      Movie:{
+        averageRating: async ({ imdbID }, context, info) => {
+          const rating = await Rating.findOne({ imdbID });
+          return rating.averageRating;
+        },
+        numVotes: async ({ imdbID }, context, info) => {
+          const rating = await Rating.findOne({ imdbID });
+          return rating.numVotes;
+        },
       }
       //   post: async (root, {_id}) => {
       //     return prepare(await Posts.findOne(ObjectId(_id)))
