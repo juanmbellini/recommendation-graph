@@ -1,4 +1,4 @@
-#  El paradigma NoSQL - Bases de Datos de Grafos: Recommendation graph
+#  El paradigma NoSQL - Bases de Datos de Grafos: IMDB recommendation graph with GraphQL
 
 Final project for the graphs databases course.
 
