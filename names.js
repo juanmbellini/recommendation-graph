@@ -14,7 +14,7 @@ const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 	const Names = db.collection('names');
 
 	const fs = require('fs');
-	const ws = fs.createWriteStream('names_array.bson');
+	const ws = fs.createWriteStream('names.json');
 
 	let i = 0;
 
@@ -32,15 +32,15 @@ const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 				lastId = names[names.length - 1]._id;
 
 				names.forEach(name => {
-                    name._id = { '$oid': name._id.toString() }; // remains the same
-                    
-                    // rename nconst -> imdbID
-                    name.imdbID = name.nconst;
-                    delete name.nconst;
+					name._id = { '$oid': name._id.toString() }; // remains the same
+					
+					// rename nconst -> imdbID
+					name.imdbID = name.nconst;
+					delete name.nconst;
 
-                    name.deathYear = name.deathYear === '\\N' ? undefined : name.deathYear;					
-                    name.primaryProfession = name.primaryProfession === '\\N' ? [] : (name.primaryProfession || '').split(',');
-                    name.knownForTitles = name.knownForTitles === '\\N' ? [] : (name.knownForTitles || '').split(',');
+					name.deathYear = name.deathYear === '\\N' ? undefined : name.deathYear;					
+					name.primaryProfession = name.primaryProfession === '\\N' ? [] : (name.primaryProfession || '').split(',');
+					name.knownForTitles = name.knownForTitles === '\\N' ? [] : (name.knownForTitles || '').split(',');
 					ws.write(JSON.stringify(name) + '\n');
 				});
 

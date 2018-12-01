@@ -23,6 +23,7 @@ export const start = async () => {
 
     const Title = db.collection('titles');
     const Rating = db.collection('ratings');
+    const Episode = db.collection('episodes');
 
     const typeDefs = [require('fs').readFileSync(require('path').join(__dirname, 'typeDefs.graphql')).toString()];
 
@@ -34,10 +35,10 @@ export const start = async () => {
       },
       Title: {
         __resolveType: (title, context, info) => {
+          if (title.totalSeasons) return 'Series';
+          if (title.episodeNumber) return 'Episode';  
           return 'Movie';
-        }
-      },
-      Movie:{
+        },
         averageRating: async ({ imdbID }, context, info) => {
           const rating = await Rating.findOne({ imdbID });
           return rating.averageRating;
@@ -46,6 +47,10 @@ export const start = async () => {
           const rating = await Rating.findOne({ imdbID });
           return rating.numVotes;
         },
+      },
+      Movie:{},
+      Series: {
+        totalSeasons:
       }
       //   post: async (root, {_id}) => {
       //     return prepare(await Posts.findOne(ObjectId(_id)))

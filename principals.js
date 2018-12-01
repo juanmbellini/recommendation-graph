@@ -14,7 +14,7 @@ const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 	const Principal = db.collection('principals');
 
 	const fs = require('fs');
-	const ws = fs.createWriteStream('principals_array.bson');
+	const ws = fs.createWriteStream('principals.json');
 
 	let i = 0;
 
@@ -32,14 +32,17 @@ const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 				lastId = principals[principals.length - 1]._id;
 
 				principals.forEach(principal => {
-                    principal._id = { '$oid': principal._id.toString() }; // remains the same
-                    
-                    // rename tconst -> imdbID
-                    principal.imdbID = principal.tconst;
-                    delete principal.tconst;
+					principal._id = { '$oid': principal._id.toString() }; // remains the same
+					
+					// rename tconst -> imdbID
+					principal.imdbID = principal.tconst;
+					delete principal.tconst;
 
-                    principal.characters = principal.characters === '\\N' ? undefined : principal.characters;
-                    principal.job = principal.job === '\\N' ? undefined : principal.job;
+					principal.name = principal.nconst;
+					delete principal.nconst;
+
+					principal.characters = principal.characters === '\\N' ? [] : JSON.parse(principal.characters || '[]');
+					principal.job = principal.job === '\\N' ? undefined : principal.job;
 					ws.write(JSON.stringify(principal) + '\n');
 				});
 

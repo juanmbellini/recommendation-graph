@@ -76,3 +76,12 @@ enum TitleType {
   SERIES
   EPISODE
 }
+
+type Name {
+  imdbID: String
+  primaryName: String
+  birthYear: Int
+  deathYear: Int
+  primaryProfession: [String]
+  knownForTitles: [Title]
+}
