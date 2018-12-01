@@ -27,61 +27,136 @@ export const start = async () => {
 
     const typeDefs = [require('fs').readFileSync(require('path').join(__dirname, 'typeDefs.graphql')).toString()];
 
+    const TitleResolver = {
+      averageRating: async ({ imdbID }, context, info) => {
+        const rating = await Rating.findOne({ imdbID });
+        return rating.averageRating;
+      },
+      numVotes: async ({ imdbID }, context, info) => {
+        const rating = await Rating.findOne({ imdbID });
+        return rating.numVotes;
+      },
+    };
+
     const resolvers = {
       Query: {
-        title: async (root, { imdbID }) => {
-          return prepare(await Title.findOne({ imdbID }));
-        }
+        title: async (root, { imdbID }) => prepare(await Title.findOne({ imdbID })),
+        movie: async (root, { imdbID }) => {
+          return prepare(await Title.findOne({
+            imdbID,
+            titleType: {
+              $in: ['movie', 'tvMovie']
+            },
+          }))
+        },
+        short: async (root, { imdbID }) => {
+          return prepare(await Title.findOne({
+            imdbID,
+            titleType: {
+              $in: ['short', 'tvShort']
+            },
+          }))
+        },
+        episode: async (root, { imdbID }) => {
+          return prepare(await Title.findOne({
+            imdbID,
+            titleType: 'tvEpisode',
+          }))
+        },
+        series: async (root, { imdbID }) => {
+          return prepare(await Title.findOne({
+            imdbID,
+            titleType: {
+              $in: ['tvSeries', 'tvMiniSeries']
+            },
+          }))
+        },
       },
       Title: {
         __resolveType: (title, context, info) => {
-          if (title.totalSeasons) return 'Series';
-          if (title.episodeNumber) return 'Episode';  
-          return 'Movie';
-        },
-        averageRating: async ({ imdbID }, context, info) => {
-          const rating = await Rating.findOne({ imdbID });
-          return rating.averageRating;
-        },
-        numVotes: async ({ imdbID }, context, info) => {
-          const rating = await Rating.findOne({ imdbID });
-          return rating.numVotes;
+          if (~['tvSeries', 'tvMiniSeries'].indexOf(title.titleType)) return 'Series';
+          if (~['short', 'tvShort'].indexOf(title.titleType)) return 'Short';
+          if (~['movie', 'tvMovie'].indexOf(title.titleType)) return 'Movie';
+          return 'Episode';
         },
       },
-      Movie:{},
+      Movie: {
+        ...TitleResolver
+      },
+      Short: {
+        ...TitleResolver
+      },
       Series: {
-        totalSeasons:
+        ...TitleResolver,
+        totalSeasons: ({ imdbID }, context, info) => {
+          return new Promise((resolve, reject) => {
+            Episode.aggregate([{
+              $match: {
+                parentTconst: imdbID
+              }
+            }, {
+              $group: {
+                _id: '$seasonNumber'
+              }
+            }, {
+              $count: 'total'
+            }], (err, doc) => {
+              if (err) return reject(err);
+              return resolve(doc.length ? doc[0].total : 0);
+            });
+          });
+        },
+        episodes: ({ imdbID }, { season }, info) => {
+          return new Promise((resolve, reject) => {
+            const q = {
+              parentTconst: imdbID
+            };
+            if (season && season.length) {
+              q.seasonNumber = { $in: season };
+            }
+            Episode.aggregate([{
+              $match: q
+            }, {
+              $sort: {
+                episodeNumber: 1
+              }
+            }, {
+              $lookup: {
+                from: 'titles',
+                localField: 'imdbID',
+                foreignField: 'imdbID',
+                as: 'episode'
+              }
+            }, {
+              $project: {
+                _id: 0,
+                episode: {
+                  $arrayElemAt: ['$episode', 0]
+                }
+              }
+            }], (err, doc) => {
+              if (err) return reject(err);
+              return resolve(doc.map(d => d.episode));
+            });
+          });
+        }
+      },
+      Episode: {
+        ...TitleResolver,
+        seasonNumber: async ({ imdbID }, context, info) => {
+          const episode = await Episode.findOne({ imdbID });
+          return episode.seasonNumber;
+        },
+        episodeNumber: async ({ imdbID }, context, info) => {
+          const episode = await Episode.findOne({ imdbID });
+          return episode.episodeNumber;
+        },
+        series: async ({ imdbID }, context, info) => {
+          const episode = await Episode.findOne({ imdbID });
+          const series = await Title.findOne({ imdbID: episode.parentTconst });
+          return series;
+        },
       }
-      //   post: async (root, {_id}) => {
-      //     return prepare(await Posts.findOne(ObjectId(_id)))
-      //   },
-      //   posts: async () => {
-      //     return (await Posts.find({}).toArray()).map(prepare)
-      //   },
-      //   comment: async (root, {_id}) => {
-      //     return prepare(await Comments.findOne(ObjectId(_id)))
-      //   },
-      // },
-      // Post: {
-      //   comments: async ({_id}) => {
-      //     return (await Comments.find({postId: _id}).toArray()).map(prepare)
-      //   }
-      // },
-      // Comment: {
-      //   post: async ({postId}) => {
-      //     return prepare(await Posts.findOne(ObjectId(postId)))
-      //   }
-      // },
-      // Mutation: {
-      //   createPost: async (root, args, context, info) => {
-      //     const res = await Posts.insertOne(args)
-      //     return prepare(res.ops[0])  // https://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#~insertOneWriteOpResult
-      //   },
-      //   createComment: async (root, args) => {
-      //     const res = await Comments.insert(args)
-      //     return prepare(await Comments.findOne({_id: res.insertedIds[1]}))
-      //   },
-      // },
     }
 
     const schema = makeExecutableSchema({

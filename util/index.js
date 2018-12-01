@@ -1,4 +1,5 @@
 export const prepare = (o) => {
-    o._id = o._id.toString()
-    return o
+    if (!o) return null;
+    o._id = o._id.toString();
+    return o;
 }
