@@ -1,0 +1,10 @@
+.ui.cards {
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.close_div {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem;
+}
