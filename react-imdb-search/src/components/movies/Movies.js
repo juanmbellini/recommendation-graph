@@ -14,6 +14,10 @@ export default class Movies extends Component {
   }
 
   componentWillMount = () => {
+    if (this.props.list) {
+      this.setState({ movies: this.props.movies || [] });
+      return;
+    }
     let urlApi = 'http://www.omdbapi.com/?apikey=e75caa77&'
     axios.get(urlApi + 's=' + this.props.searchString)
       .then(({data}) => {
@@ -24,10 +28,39 @@ export default class Movies extends Component {
       })
   }
 
+  componentWillReceiveProps = (nextProps) => {
+    if (nextProps.movies !== this.props.movies) {
+      this.setState({ movies: nextProps.movies });
+    }
+  }
+
   render () {
     let cards = this.state.movies.map((m, i) => {
-      return <MovieItem key={i} movie={m}/>
-    })
+      return (
+        <MovieItem
+          key={i}
+          movie={m}
+          list={this.props.list}
+          removeFromMyList={this.props.removeFromMyList}
+          addToMyList={this.props.addToMyList}
+        />
+      );
+    });
+
+    const cardStyle = this.props.list ? {} : { height: '100vh' };
+
+    const cardList = (
+      <Card.Group style={cardStyle}>
+        {cards}
+      </Card.Group>
+    );
+
+    if (this.props.list) {
+      if (!this.state.movies.length) {
+        return <span>No movies in your list</span>;
+      }
+      return cardList;
+    }
     
     return (
       <div className='movies_wrapper'>
@@ -39,9 +72,7 @@ export default class Movies extends Component {
             </Button.Content>
           </Button>
         </div>
-        <Card.Group>
-          {cards}
-        </Card.Group>
+        {cardList}
       </div>
     );
   }

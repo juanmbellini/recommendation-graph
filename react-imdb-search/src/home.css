@@ -3,6 +3,6 @@ div.main_wrapper {
   flex-flow: column wrap;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  /* height: 100vh; */
   text-align: center;
 }

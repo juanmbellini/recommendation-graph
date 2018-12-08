@@ -11,16 +11,28 @@ class App extends Component {
       movieSearch: '',
       movies: [],
       isMoviesResults: false,
-      active: false
+      active: false,
+      myList: []
     }
   }
 
-  inputHandler = e => { this.setState({movieSearch: e.target.value}) }
+  inputHandler = e => this.setState({movieSearch: e.target.value})
 
   search = () => {
     this.state.movieSearch.length > 0 
       ? this.setState({isMoviesResults: !this.state.isMoviesResults})
       : alert('Type somethig please ...')
+  }
+
+  addToMyList = (movie) => {
+    this.setState({ myList: this.state.myList.concat(movie) });
+  }
+
+  removeFromMyList = (movie) => {
+    const idx = this.state.myList.findIndex(v => v.imdbID === movie.imdbID);
+    const nextMyList = this.state.myList.slice();
+    nextMyList.splice(idx, 1);
+    this.state({ myList: nextMyList });
   }
 
   closeSearch = () => {this.setState({isMoviesResults: !this.state.isMoviesResults})}
@@ -30,7 +42,7 @@ class App extends Component {
       <div>
         {this.state.isMoviesResults === false ? ( 
           <div className='main_wrapper'>
-            <Header as='h1'> IMDB Search </Header>
+            <Header as='h1'>IMDB Search</Header>
             <Divider />
             <Container>
               <Form>
@@ -39,10 +51,14 @@ class App extends Component {
                 </Form.Field>
                 <Button secondary type='submit' size='big' onClick={this.search}>Go Find</Button>
               </Form>
-            </Container>  
+              <Header as='h1'>My List</Header>
+              <Movies list movies={this.state.myList} addToMyList={this.addToMyList} removeFromMyList={this.removeFromMyList} />
+              <Header as='h1'>Recommendations</Header>
+              <Movies list movies={this.state.myList} addToMyList={this.addToMyList} removeFromMyList={this.removeFromMyList} />
+            </Container>
           </div>
         ) : (
-          <Movies searchString={this.state.movieSearch} closeComponent={this.closeSearch}/>
+          <Movies searchString={this.state.movieSearch} closeComponent={this.closeSearch} addToMyList={this.addToMyList} removeFromMyList={this.removeFromMyList} />
         )}
       </div>
     );
