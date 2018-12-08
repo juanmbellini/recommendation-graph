@@ -14,7 +14,7 @@ const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 	const Title = db.collection('titles');
 
 	const fs = require('fs');
-	const ws = fs.createWriteStream('genres_array.bson');
+	const ws = fs.createWriteStream('titles.json');
 
 	let i = 0;
 
@@ -33,9 +33,12 @@ const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 
 				titles.forEach(title => {
 					if (!Array.isArray(title.genres)) {
-						title.genres = (title.genres || '').split(',');
+						title.genres = (title.genres || '').split(',').filter(v => v !== '\\N');
 					}
 					title._id = { '$oid': title._id.toString() };
+					// rename tconst -> imdbID
+					title.imdbID = title.tconst;
+					delete principal.tconst;
 					title.isAdult = Boolean(title.isAdult);
 					title.endYear = title.endYear === '\\N' ? undefined : title.endYear;
 					ws.write(JSON.stringify(title) + '\n');
