@@ -14,7 +14,7 @@ export default class Movies extends Component {
   }
 
   componentWillMount = () => {
-    if (this.props.list) {
+    if (this.props.list || this.props.recommendation) {
       this.setState({ movies: this.props.movies || [] });
       return;
     }
@@ -41,13 +41,14 @@ export default class Movies extends Component {
           key={i}
           movie={m}
           list={this.props.list}
+          recommendation={this.props.recommendation}
           removeFromMyList={this.props.removeFromMyList}
           addToMyList={this.props.addToMyList}
         />
       );
     });
 
-    const cardStyle = this.props.list ? {} : { height: '100vh' };
+    const cardStyle = this.props.list || this.props.recommendation ? {} : { height: '100vh' };
 
     const cardList = (
       <Card.Group style={cardStyle}>
@@ -55,7 +56,7 @@ export default class Movies extends Component {
       </Card.Group>
     );
 
-    if (this.props.list) {
+    if (this.props.list || this.props.recommendation) {
       if (!this.state.movies.length) {
         return <span>No movies in your list</span>;
       }
