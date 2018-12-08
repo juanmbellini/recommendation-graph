@@ -213,11 +213,62 @@ export const start = async () => {
             return resolve(docs);
           });
         });
+      },
+      actors: ({ imdbID }) => {
+        return new Promise((resolve, reject) => {
+          Principal.aggregate([{
+            $match: {
+              imdbID
+            }
+          }, {
+            $lookup: {
+              from: 'names',
+              localField: 'name',
+              foreignField: 'imdbID',
+              as: 'names'
+            }
+          }, {
+            $replaceRoot: {
+              newRoot: {
+                $mergeObjects: [{
+                  $arrayElemAt: ['$names', 0]
+                }, '$$ROOT']
+              }
+            }
+          }, {
+            $match: {
+              category: 'actor'
+            }
+          }, {
+            $project: {
+              primaryName: 1,
+              birthYear: 1,
+              deathYear: 1,
+              primaryProfession: 1,
+              knownForTitles: 1,
+              imdbID: '$name',
+              ordering: 1,
+              category: 1,
+              characters: 1,
+              job: 1
+            }
+          }], (err, docs) => {
+            if (err) return reject(err);
+            return resolve(docs);
+          });
+        });
       }
     };
 
     const resolvers = {
       Query: {
+        titles: async (root, { imdbIDs }) => {
+          return (await Title.find({
+            imdbID: {
+              $in: imdbIDs
+            }
+          }).toArray());
+        },
         title: async (root, { imdbID }) => await Title.findOne({ imdbID }),
         movie: async (root, { imdbID }) => {
           return (await Title.findOne({
@@ -337,7 +388,6 @@ export const start = async () => {
       },
       Principal: {
         knownForTitles: async ({ knownForTitles }, context, info) => {
-          console.log(knownForTitles)
           return (await Title.find({ imdbID: { $in: knownForTitles }}).toArray());
         },
       }

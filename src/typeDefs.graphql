@@ -3,6 +3,7 @@ schema {
 }
 
 type Query {
+  titles(imdbIDs: [String!]!): [Title]
   title(imdbID: String!): Title
   movie(imdbID: String!): Movie
   short(imdbID: String!): Short
@@ -26,6 +27,7 @@ interface Title {
   directors: [Principal]
   writers: [Principal]
   cast: [Principal]
+  actors: [Principal]
 }
 
 type Movie implements Title {
@@ -43,6 +45,7 @@ type Movie implements Title {
   directors: [Principal]
   writers: [Principal]
   cast: [Principal]
+  actors: [Principal]
 }
 
 type Short implements Title {
@@ -60,6 +63,7 @@ type Short implements Title {
   directors: [Principal]
   writers: [Principal]
   cast: [Principal]
+  actors: [Principal]
 }
 
 type Series implements Title {
@@ -77,6 +81,7 @@ type Series implements Title {
   directors: [Principal]
   writers: [Principal]
   cast: [Principal]
+  actors: [Principal]
   totalSeasons: Int
   episodes(season: [Int]): [Episode]
 }
@@ -96,6 +101,7 @@ type Episode implements Title {
   directors: [Principal]
   writers: [Principal]
   cast: [Principal]
+  actors: [Principal]
   seasonNumber: Int
   episodeNumber: Int
   series: Series
