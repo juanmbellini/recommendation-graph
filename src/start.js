@@ -32,11 +32,11 @@ export const start = async () => {
     const TitleResolver = {
       averageRating: async ({ imdbID }, context, info) => {
         const rating = await Rating.findOne({ imdbID });
-        return rating.averageRating;
+        return rating ? rating.averageRating : 0;
       },
       numVotes: async ({ imdbID }, context, info) => {
         const rating = await Rating.findOne({ imdbID });
-        return rating.numVotes;
+        return rating ? rating.numVotes : 0;
       },
       directors: ({ imdbID }) => {
         return new Promise((resolve, reject) => {

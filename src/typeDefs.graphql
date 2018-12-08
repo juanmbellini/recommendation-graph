@@ -20,7 +20,7 @@ interface Title {
   isAdult: Int
   startYear: Int
   endYear: Int
-  runtime: Int
+  runtimeMinutes: Int
   genres: [String]
   averageRating: Float
   numVotes: Int
@@ -38,7 +38,7 @@ type Movie implements Title {
   isAdult: Int
   startYear: Int
   endYear: Int
-  runtime: Int
+  runtimeMinutes: Int
   genres: [String]
   averageRating: Float
   numVotes: Int
@@ -56,7 +56,7 @@ type Short implements Title {
   isAdult: Int
   startYear: Int
   endYear: Int
-  runtime: Int
+  runtimeMinutes: Int
   genres: [String]
   averageRating: Float
   numVotes: Int
@@ -74,7 +74,7 @@ type Series implements Title {
   isAdult: Int
   startYear: Int
   endYear: Int
-  runtime: Int
+  runtimeMinutes: Int
   genres: [String]
   averageRating: Float
   numVotes: Int
@@ -94,7 +94,7 @@ type Episode implements Title {
   isAdult: Int
   startYear: Int
   endYear: Int
-  runtime: Int
+  runtimeMinutes: Int
   genres: [String]
   averageRating: Float
   numVotes: Int
