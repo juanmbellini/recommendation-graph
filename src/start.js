@@ -48,21 +48,61 @@ export const start = async () => {
             $unwind: '$directors'
           }, {
             $lookup: {
+              from: 'principals',
+              let: {
+                imdbID: '$imdbID',
+                directors: '$directors'
+              },
+              pipeline: [{
+                $match: {
+                  $expr: {
+                    $and: [{
+                      $eq: ['$imdbID', '$$imdbID']
+                    }, {
+                      $eq: ['$name', '$$directors']
+                    }]
+                  }
+                }
+              }],
+              as: 'principals'
+            }
+          }, {
+            $replaceRoot: {
+              newRoot: {
+                $arrayElemAt: ['$principals', 0]
+              }
+            }
+          }, {
+            $lookup: {
               from: 'names',
-              localField: 'directors',
+              localField: 'name',
               foreignField: 'imdbID',
-              as: 'director'
+              as: 'names'
+            }
+          }, {
+            $replaceRoot: {
+              newRoot: {
+                $mergeObjects: [{
+                  $arrayElemAt: ['$names', 0]
+                }, '$$ROOT']
+              }
             }
           }, {
             $project: {
-              _id: 0,
-              director: {
-                $arrayElemAt: ['$director', 0]
-              }
+              primaryName: 1,
+              birthYear: 1,
+              deathYear: 1,
+              primaryProfession: 1,
+              knownForTitles: 1,
+              imdbID: '$name',
+              ordering: 1,
+              category: 1,
+              characters: 1,
+              job: 1
             }
           }], (err, docs) => {
             if (err) return reject(err);
-            return resolve(docs.map(d => d.director));
+            return resolve(docs);
           });
         });
       },
@@ -76,25 +116,65 @@ export const start = async () => {
             $unwind: '$writers'
           }, {
             $lookup: {
+              from: 'principals',
+              let: {
+                imdbID: '$imdbID',
+                writers: '$writers'
+              },
+              pipeline: [{
+                $match: {
+                  $expr: {
+                    $and: [{
+                      $eq: ['$imdbID', '$$imdbID']
+                    }, {
+                      $eq: ['$name', '$$writers']
+                    }]
+                  }
+                }
+              }],
+              as: 'principals'
+            }
+          }, {
+            $replaceRoot: {
+              newRoot: {
+                $arrayElemAt: ['$principals', 0]
+              }
+            }
+          }, {
+            $lookup: {
               from: 'names',
-              localField: 'writers',
+              localField: 'name',
               foreignField: 'imdbID',
-              as: 'writer'
+              as: 'names'
+            }
+          }, {
+            $replaceRoot: {
+              newRoot: {
+                $mergeObjects: [{
+                  $arrayElemAt: ['$names', 0]
+                }, '$$ROOT']
+              }
             }
           }, {
             $project: {
-              _id: 0,
-              writer: {
-                $arrayElemAt: ['$writer', 0]
-              }
+              primaryName: 1,
+              birthYear: 1,
+              deathYear: 1,
+              primaryProfession: 1,
+              knownForTitles: 1,
+              imdbID: '$name',
+              ordering: 1,
+              category: 1,
+              characters: 1,
+              job: 1
             }
           }], (err, docs) => {
             if (err) return reject(err);
-            return resolve(docs.map(d => d.writer));
+            return resolve(docs);
           });
         });
       },
-      actors: ({ imdbID }) => {
+      cast: ({ imdbID }) => {
         return new Promise((resolve, reject) => {
           Principal.aggregate([{
             $match: {
@@ -105,18 +185,32 @@ export const start = async () => {
               from: 'names',
               localField: 'name',
               foreignField: 'imdbID',
-              as: 'actor'
+              as: 'names'
+            }
+          }, {
+            $replaceRoot: {
+              newRoot: {
+                $mergeObjects: [{
+                  $arrayElemAt: ['$names', 0]
+                }, '$$ROOT']
+              }
             }
           }, {
             $project: {
-              _id: 0,
-              actor: {
-                $arrayElemAt: ['$actor', 0]
-              }
+              primaryName: 1,
+              birthYear: 1,
+              deathYear: 1,
+              primaryProfession: 1,
+              knownForTitles: 1,
+              imdbID: '$name',
+              ordering: 1,
+              category: 1,
+              characters: 1,
+              job: 1
             }
           }], (err, docs) => {
             if (err) return reject(err);
-            return resolve(docs.map(d => d.actor));
+            return resolve(docs);
           });
         });
       }
@@ -241,7 +335,7 @@ export const start = async () => {
           return series;
         },
       },
-      Person: {
+      Principal: {
         knownForTitles: async ({ knownForTitles }, context, info) => {
           console.log(knownForTitles)
           return (await Title.find({ imdbID: { $in: knownForTitles }}).toArray());

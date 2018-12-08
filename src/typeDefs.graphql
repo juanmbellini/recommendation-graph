@@ -23,9 +23,9 @@ interface Title {
   genres: [String]
   averageRating: Float
   numVotes: Int
-  directors: [Person]
-  writers: [Person]
-  actors: [Person]
+  directors: [Principal]
+  writers: [Principal]
+  cast: [Principal]
 }
 
 type Movie implements Title {
@@ -40,9 +40,9 @@ type Movie implements Title {
   genres: [String]
   averageRating: Float
   numVotes: Int
-  directors: [Person]
-  writers: [Person]
-  actors: [Person]
+  directors: [Principal]
+  writers: [Principal]
+  cast: [Principal]
 }
 
 type Short implements Title {
@@ -57,9 +57,9 @@ type Short implements Title {
   genres: [String]
   averageRating: Float
   numVotes: Int
-  directors: [Person]
-  writers: [Person]
-  actors: [Person]
+  directors: [Principal]
+  writers: [Principal]
+  cast: [Principal]
 }
 
 type Series implements Title {
@@ -74,9 +74,9 @@ type Series implements Title {
   genres: [String]
   averageRating: Float
   numVotes: Int
-  directors: [Person]
-  writers: [Person]
-  actors: [Person]
+  directors: [Principal]
+  writers: [Principal]
+  cast: [Principal]
   totalSeasons: Int
   episodes(season: [Int]): [Episode]
 }
@@ -93,9 +93,9 @@ type Episode implements Title {
   genres: [String]
   averageRating: Float
   numVotes: Int
-  directors: [Person]
-  writers: [Person]
-  actors: [Person]
+  directors: [Principal]
+  writers: [Principal]
+  cast: [Principal]
   seasonNumber: Int
   episodeNumber: Int
   series: Series
@@ -109,12 +109,15 @@ enum TitleType {
 }
 
 ## People
-
-type Person {
+type Principal {
   imdbID: String
   primaryName: String
   birthYear: Int
   deathYear: Int
   primaryProfession: [String]
   knownForTitles: [Title]
+  ordering: Int
+  category: String
+  job: String
+  characters: [String]
 }
