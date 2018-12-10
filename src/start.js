@@ -263,14 +263,16 @@ export const start = async () => {
 
     const resolvers = {
       Query: {
-        titles: async (root, { imdbIDs }) => {
-          return (await Title.find({
-            imdbID: {
-              $in: imdbIDs
-            }
-          }).toArray());
+        titles: async (root, { imdbIDs }, context) => {
+          const titles = await Title.find({ imdbID: { $in: imdbIDs } }).toArray();
+          context.titles = titles;
+          return titles;
         },
-        title: async (root, { imdbID }) => await Title.findOne({ imdbID }),
+        title: async (root, { imdbID }, context) => {
+          const title = await Title.findOne({ imdbID });
+          context.title = title;
+          return title;
+        },
         movie: async (root, { imdbID }) => {
           return (await Title.findOne({
             imdbID,
@@ -393,7 +395,17 @@ export const start = async () => {
         },
       },
       Genre: {
-        topTitles: async ({ title }, { year, limit }) => {
+        topTitles: async ({ title }, { limit }, context) => {
+          const titles = (context.titles || [context.title]);
+          const minYear = titles.reduce((memo, val) => {
+            if (val.startYear < memo) return val.startYear;
+            return memo;
+          }, Number.MAX_SAFE_INTEGER);
+          const maxYear = titles.reduce((memo, val) => {
+            if (val.startYear > memo) return val.startYear;
+            return memo;
+          }, 0);
+          console.log([minYear, maxYear])
           return new Promise((resolve, reject) => {
             Rating.aggregate([{
               $sort: {
@@ -417,7 +429,11 @@ export const start = async () => {
             }, {
               $match: {
                 genres: title,
-                startYear: year
+                startYear: {
+                  $gte: minYear,
+                  $lte: maxYear
+                },
+                titleType: 'movie'
               }
             }, {
               $limit: limit

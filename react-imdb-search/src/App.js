@@ -34,7 +34,7 @@ class App extends Component {
     const idx = this.state.myList.findIndex(v => v.imdbID === movie.imdbID);
     const nextMyList = this.state.myList.slice();
     nextMyList.splice(idx, 1);
-    this.state({ myList: nextMyList });
+    this.setState({ myList: nextMyList });
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -54,38 +54,30 @@ class App extends Component {
       variables: { ids },
       query: `
         query($ids: [String!]!) {
-          titles(imdbIDs: $ids) {
-            imdbID
-            titleType
-            primaryTitle
-            originalTitle
-            isAdult
-            startYear
-            endYear
-            runtimeMinutes
-            genres
-            averageRating
-            numVotes
+          titles(imdbIDs:$ids) {
+            genres {
+              topTitles(limit: 20) {
+                imdbID
+                primaryTitle
+                startYear
+                averageRating
+                numVotes
+              }
+            }
             actors {
-              imdbID
-              primaryName
-              birthYear
-              deathYear
-              primaryProfession
-              ordering
-              category
-              job
-              characters
               knownForTitles {
                 imdbID
-                titleType
                 primaryTitle
-                originalTitle
-                isAdult
                 startYear
-                endYear
-                runtimeMinutes
-                genres
+                averageRating
+                numVotes
+              }
+            }
+            directors {
+              knownForTitles {
+                imdbID
+                primaryTitle
+                startYear
                 averageRating
                 numVotes
               }
@@ -96,13 +88,47 @@ class App extends Component {
     .then(({ data: graphqlResponse }) => {
       const { data } = graphqlResponse;
       
-      const recommendations = data.titles.flatMap(t => t.actors).flatMap(a => a.knownForTitles).sort((t1, t2) => {
-        return -(t1.averageRating - t2.averageRating);
-      }).filter(v => !~ids.indexOf(v.imdbID)).slice(0, 4).map(r => ({
-        Title: r.primaryTitle,
-        Year: r.startYear,
-        imdbID: r.imdbID
-      }));
+      const recommendations =
+        data.titles
+        .flatMap(t => t.actors)
+        .flatMap(a => a.knownForTitles)
+        .map(v => {
+          v.score = v.averageRating * v.numVotes * 1.1;
+          return v;
+        })
+        .concat(
+          data.titles
+          .flatMap(t => t.directors)
+          .flatMap(a => a.knownForTitles)
+          .map(v => {
+            v.score = v.averageRating * v.numVotes;
+            return v;
+          })
+        )
+        .concat(
+          data.titles
+          .flatMap(t => t.genres)
+          .flatMap(a => a.topTitles)
+          .map(v => {
+            v.score = v.averageRating * v.numVotes * 0.9;
+            return v;
+          })
+        )
+        .reduce((memo, val) => {
+          const v = memo.find(v => v.imdbID === val.imdbID);
+          if (!v) {
+            memo.push(val);
+          }
+          return memo;
+        }, [])
+        .sort((t1, t2) => -(t1.score - t2.score))
+        .filter(v => !~ids.indexOf(v.imdbID))
+        .slice(0, 9)
+        .map(r => ({
+          Title: r.primaryTitle,
+          Year: r.startYear,
+          imdbID: r.imdbID
+        }));
       console.log(recommendations);
       this.setState({ recommendations });
       recommendations.forEach(r => {
@@ -110,6 +136,7 @@ class App extends Component {
         axios.get(urlApi).then(({data}) => {
           const recommendations = this.state.recommendations.slice();
           const r  = recommendations.find(v => v.imdbID === data.imdbID);
+          if (!data || !r) return;
           r.Poster = data.Poster;
           this.setState({ recommendations });
         });
