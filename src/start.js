@@ -38,6 +38,7 @@ export const start = async () => {
         const rating = await Rating.findOne({ imdbID });
         return rating ? rating.numVotes : 0;
       },
+      genres: ({ genres }) => genres.map(g => ({ title: g })),
       directors: ({ imdbID }) => {
         return new Promise((resolve, reject) => {
           Crew.aggregate([{
@@ -390,6 +391,42 @@ export const start = async () => {
         knownForTitles: async ({ knownForTitles }, context, info) => {
           return (await Title.find({ imdbID: { $in: knownForTitles }}).toArray());
         },
+      },
+      Genre: {
+        topTitles: async ({ title }, { year, limit }) => {
+          return new Promise((resolve, reject) => {
+            Rating.aggregate([{
+              $sort: {
+                averageRating: -1
+              }
+            }, {
+              $lookup: {
+                from: 'titles',
+                localField: 'imdbID',
+                foreignField: 'imdbID',
+                as: 'title'
+              }
+            }, {
+              $replaceRoot: {
+                newRoot: {
+                  $mergeObjects: [{
+                    $arrayElemAt: ['$title', 0]
+                  }, '$$ROOT']
+                }
+              }
+            }, {
+              $match: {
+                genres: title,
+                startYear: year
+              }
+            }, {
+              $limit: limit
+            }], (err, docs) => {
+              if (err) return reject(err);
+              return resolve(docs);
+            })
+          });
+        }
       }
     }
 

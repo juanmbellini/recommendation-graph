@@ -12,6 +12,11 @@ type Query {
   # search(title: String!, types: [TitleType], result: Int = 5): [Title]
 }
 
+type Genre {
+  title: String
+  topTitles(year: Int!, limit: Int!): [Title]
+}
+
 interface Title {
   imdbID: String
   titleType: String
@@ -21,7 +26,7 @@ interface Title {
   startYear: Int
   endYear: Int
   runtimeMinutes: Int
-  genres: [String]
+  genres: [Genre]
   averageRating: Float
   numVotes: Int
   directors: [Principal]
@@ -39,7 +44,7 @@ type Movie implements Title {
   startYear: Int
   endYear: Int
   runtimeMinutes: Int
-  genres: [String]
+  genres: [Genre]
   averageRating: Float
   numVotes: Int
   directors: [Principal]
@@ -57,7 +62,7 @@ type Short implements Title {
   startYear: Int
   endYear: Int
   runtimeMinutes: Int
-  genres: [String]
+  genres: [Genre]
   averageRating: Float
   numVotes: Int
   directors: [Principal]
@@ -75,7 +80,7 @@ type Series implements Title {
   startYear: Int
   endYear: Int
   runtimeMinutes: Int
-  genres: [String]
+  genres: [Genre]
   averageRating: Float
   numVotes: Int
   directors: [Principal]
@@ -95,7 +100,7 @@ type Episode implements Title {
   startYear: Int
   endYear: Int
   runtimeMinutes: Int
-  genres: [String]
+  genres: [Genre]
   averageRating: Float
   numVotes: Int
   directors: [Principal]
