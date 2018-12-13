@@ -397,6 +397,7 @@ export const start = async () => {
       Genre: {
         topTitles: async ({ title }, { limit }, context) => {
           const titles = (context.titles || [context.title]);
+          console.log(titles);
           const minYear = titles.reduce((memo, val) => {
             if (val.startYear < memo) return val.startYear;
             return memo;
@@ -406,42 +407,17 @@ export const start = async () => {
             return memo;
           }, 0);
           console.log([minYear, maxYear])
-          return new Promise((resolve, reject) => {
-            Rating.aggregate([{
-              $sort: {
-                averageRating: -1
-              }
-            }, {
-              $lookup: {
-                from: 'titles',
-                localField: 'imdbID',
-                foreignField: 'imdbID',
-                as: 'title'
-              }
-            }, {
-              $replaceRoot: {
-                newRoot: {
-                  $mergeObjects: [{
-                    $arrayElemAt: ['$title', 0]
-                  }, '$$ROOT']
-                }
-              }
-            }, {
-              $match: {
-                genres: title,
-                startYear: {
-                  $gte: minYear,
-                  $lte: maxYear
-                },
-                titleType: 'movie'
-              }
-            }, {
-              $limit: limit
-            }], (err, docs) => {
-              if (err) return reject(err);
-              return resolve(docs);
-            })
-          });
+          const promise = Title.find({
+            genres: title,
+            startYear: {
+              $gte: minYear,
+              $lte: maxYear
+            },
+            titleType: 'movie'
+          }).sort({
+            averageRating: -1
+          }).limit(limit);
+          return (await promise.toArray());
         }
       }
     }

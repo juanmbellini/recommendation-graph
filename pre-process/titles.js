@@ -12,6 +12,7 @@ const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 	const db = await MongoClient.connect(MONGO_URL);
 
 	const Title = db.collection('titles');
+	const Rating = db.collection('ratings');
 
 	const fs = require('fs');
 	const ws = fs.createWriteStream('titles.json');
@@ -31,20 +32,28 @@ const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 				if (!titles.length) return cb(null, []);
 				lastId = titles[titles.length - 1]._id;
 
-				titles.forEach(title => {
-					if (!Array.isArray(title.genres)) {
-						title.genres = (title.genres || '').split(',').filter(v => v !== '\\N');
-					}
-					title._id = { '$oid': title._id.toString() };
-					// rename tconst -> imdbID
-					title.imdbID = title.tconst;
-					delete principal.tconst;
-					title.isAdult = Boolean(title.isAdult);
-					title.endYear = title.endYear === '\\N' ? undefined : title.endYear;
-					ws.write(JSON.stringify(title) + '\n');
-				});
-
-				cb(null, titles);
+				async.eachLimit(titles, 50, (title, done) => {
+					async.waterfall([
+						next => Rating.findOne({ imdbID: title.tconst }, next),
+						(rating, next) => {
+							title._id = { '$oid': title._id.toString() };
+							if (!Array.isArray(title.genres)) {
+								title.genres = (title.genres || '').split(',').filter(v => v !== '\\N');
+							}
+							// rename tconst -> imdbID
+							title.imdbID = title.tconst;
+							delete title.tconst;
+							title.isAdult = Boolean(title.isAdult);
+							title.endYear = title.endYear === '\\N' ? undefined : title.endYear;
+							if (rating) {
+								title.averageRating = rating.averageRating;
+								title.numVotes = rating.numVotes;
+							}
+							ws.write(JSON.stringify(title) + '\n');
+							next();
+						}
+					], done);
+				}, err => cb(err, titles));
 			});
 		},
 		titles => {
@@ -59,7 +68,11 @@ const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:27017/nosql`;
 			console.log('done');
 
 			ws.end();
-			process.exit(0);
+			ws.on('finish', () => {
+				console.log('write is finished');
+				process.exit(0);
+			});
+			
 		}
 	)
 })();
